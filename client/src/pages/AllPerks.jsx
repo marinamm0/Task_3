@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api'
 
@@ -20,6 +20,28 @@ export default function AllPerks() {
 
   
   const [error, setError] = useState('')
+
+  // Load perks on initial mount
+  useEffect(() => {
+    loadAllPerks()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Debounced auto-search when searchQuery or merchantFilter change
+  const skipAuto = useRef(true)
+  useEffect(() => {
+    // Skip the first effect run because we already loaded on mount
+    if (skipAuto.current) {
+      skipAuto.current = false
+      return
+    }
+
+    const id = setTimeout(() => {
+      loadAllPerks()
+    }, 500)
+
+    return () => clearTimeout(id)
+  }, [searchQuery, merchantFilter])
 
   // ==================== SIDE EFFECTS WITH useEffect HOOK ====================
 
@@ -136,7 +158,8 @@ export default function AllPerks() {
                 type="text"
                 className="input"
                 placeholder="Enter perk name..."
-                
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
               />
               <p className="text-xs text-zinc-500 mt-1">
                 Auto-searches as you type, or press Enter / click Search
@@ -151,7 +174,8 @@ export default function AllPerks() {
               </label>
               <select
                 className="input"
-                
+                value={merchantFilter}
+                onChange={e => setMerchantFilter(e.target.value)}
               >
                 <option value="">All Merchants</option>
                 
